@@ -1,9 +1,7 @@
 (ns judgr.redis.db
   (:use [judgr.core]
         [judgr.db.base])
-  (:import [java.util Date]
-           [java.text SimpleDateFormat]
-           [redis.clients.jedis Jedis]))
+  (:import [redis.clients.jedis Jedis]))
 
 (defn- feature-key
   "Returns the key used to store information about a feature."
