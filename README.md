@@ -32,7 +32,6 @@ order to create your classifier:
                    [:database :redis] {:host     "localhost"
                                        :port     6379
                                        :auth?    false
-                                       :username ""
                                        :password ""}))
 
 (def classifier (classifier-from new-settings))
