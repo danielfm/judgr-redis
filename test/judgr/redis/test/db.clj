@@ -13,7 +13,7 @@
                                        :port 6379}))
 
 (defn- clean-db!
-  "Removes all documents from the database."
+  "Removes all keys from the database."
   [db]
   (.flushDB (.get-connection db)))
 
@@ -45,7 +45,7 @@
 
     (testing "if class is invalid"
       (is (thrown? IllegalArgumentException
-                   (.add-item! db "Some mensagem" :some-class))))))
+                   (.add-item! db "Some message" :some-class))))))
 
 (deftest adding-features
   (with-fixture empty-db []
