@@ -5,35 +5,29 @@
            [java.text SimpleDateFormat]
            [redis.clients.jedis Jedis]))
 
-(def date-format (SimpleDateFormat. "yyyy-MM-dd'T'HH:mm:ss.SSSZ"))
-
-(defn- format-date
-  ""
-  [date]
-  (.format date-format date))
-
 (defn- feature-key
-  ""
+  "Returns the key used to store information about a feature."
   [feature]
   (str "feature:" feature))
 
 (defn- items-class
-  ""
+  "Returns the key used to store items of a given class."
   [class]
   (str "items:" (name class)))
 
 (defn- class-count-field
-  ""
+  "Returns the field name used to store the number of times a feature was
+flagged with a given class."
   [class]
   (str "total:" (name class)))
 
 (defn- get-int
-  ""
+  "Returns an integer value from a feature hash."
   [feature field]
   (Integer/parseInt (get feature field "0")))
 
 (defmacro with-transaction
-  ""
+  "Runs body inside a Redis transaction."
   [conn & body]
   `(let [~'conn (.multi ~'conn)]
      ~@body
