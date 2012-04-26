@@ -4,7 +4,6 @@
         [judgr.redis.db]
         [judgr.redis.test.util]
         [clojure.test])
-  (:require [somnium.congomongo :as mongodb])
   (:import [judgr.redis.db RedisDB]))
 
 (def new-settings
