@@ -42,6 +42,7 @@ flagged with a given class."
   [{{:keys [redis]} :database}]
   (let [conn (Jedis. (:host redis) (:port redis))]
     (authenticate redis conn)
+    (.select conn (get redis :database 0))
     conn))
 
 (deftype RedisDB [settings conn]
