@@ -12,7 +12,6 @@ Add the following dependencies to your _project.clj_ file:
 
 ````clojure
 
-[judgr "0.2.0"]
 [judgr/redis "0.2.0"]
 ````
 
