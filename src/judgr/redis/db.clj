@@ -66,6 +66,9 @@ flagged with a given class."
           (.hincrBy conn key "total" 1))
         (.get-feature db feature))))
 
+  (clean-db! [db]
+    (.flushDB conn))
+
   (get-feature [db feature]
     (let [f (.hgetAll conn (feature-key feature))]
       (if-not (empty? f)

@@ -13,19 +13,14 @@
                                        :host     "localhost"
                                        :port     6379}))
 
-(defn- clean-db!
-  "Removes all keys from the database."
-  [db]
-  (.flushDB (.get-connection db)))
-
 (def-fixture empty-db []
   (let [db (db-from new-settings)]
-    (clean-db! db)
+    (.clean-db! db)
     (test-body)))
 
 (def-fixture basic-db []
   (let [db (db-from new-settings)]
-    (clean-db! db)
+    (.clean-db! db)
     (.add-item! db "Some message" :positive)
     (.add-item! db "Another message" :positive)
     (.add-feature! db "Some message" "message" :positive)
