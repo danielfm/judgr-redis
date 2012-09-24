@@ -10,7 +10,7 @@ Add the following dependencies to your _project.clj_ file:
 
 ````clojure
 
-[judgr/redis "0.2.1"]
+[judgr/redis "0.2.2"]
 ````
 
 Then, require the `judgr.redis.db` module and adjust the settings in
@@ -29,8 +29,7 @@ order to create your classifier:
                    [:database :redis] {:database 0
                                        :host     "localhost"
                                        :port     6379
-                                       :auth?    false
-                                       :password ""}))
+                                       :password nil}))
 
 (def classifier (classifier-from new-settings))
 

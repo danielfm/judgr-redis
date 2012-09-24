@@ -1,4 +1,4 @@
-(defproject judgr/redis "0.2.1"
+(defproject judgr/redis "0.2.2"
   :description "Redis support for Judgr"
   :url "http://github.com/danielfm/judgr-redis"
   :dependencies [[judgr "0.2.1"]

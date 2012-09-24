@@ -1,7 +1,7 @@
 (ns judgr.redis.db
   (:use [judgr.core]
         [judgr.db.base])
-  (:import [redis.clients.jedis Jedis]))
+  (:import [redis.clients.jedis JedisPoolConfig JedisPool Jedis]))
 
 (defn- feature-key
   "Returns the key used to store information about a feature."
@@ -31,72 +31,82 @@ flagged with a given class."
      ~@body
      (.exec ~'conn)))
 
-(defn- authenticate
-  "Authenticates against the specified Redis connection."
-  [redis-settings conn]
-  (when (:auth? redis-settings)
-    (.auth conn (:password redis-settings))))
+(defmacro with-connection
+  ""
+  [pool settings & body]
+  `(let [~'conn (.getResource ~pool)]
+     (try
+       (.select ~'conn (or (-> ~settings :database :redis :database) 0))
+       ~@body
+       (finally
+         (.returnResource  ~pool ~'conn)))))
 
-(defn create-connection!
-  "Creates a connection to Redis server."
+(defn create-pool!
+  ""
   [{{:keys [redis]} :database}]
-  (let [conn (Jedis. (:host redis) (:port redis))]
-    (authenticate redis conn)
-    (.select conn (get redis :database 0))
-    conn))
+  (let [config (JedisPoolConfig.)]
+    (JedisPool. config (:host redis) (:port redis) 1000 (:password redis))))
 
-(deftype RedisDB [settings conn]
+(deftype RedisDB [settings pool]
   ConnectionBasedDB
   (get-connection [db]
-    conn)
+    pool)
 
   FeatureDB
   (add-item! [db item class]
     (ensure-valid-class settings class
-      (if (> (.sadd conn (items-class class) item) 0)
-        {:item item :class class})))
+      (with-connection pool settings
+        (if (> (.sadd conn (items-class class) item) 0)
+          {:item item :class class}))))
 
   (add-feature! [db item feature class]
     (ensure-valid-class settings class
       (let [key (feature-key feature)
             class-count (class-count-field class)]
-        (with-transaction conn
-          (.sadd conn "features" feature)
-          (.hincrBy conn key class-count 1)
-          (.hincrBy conn key "total" 1))
+        (with-connection pool settings
+          (with-transaction conn
+            (.sadd conn "features" feature)
+            (.hincrBy conn key class-count 1)
+            (.hincrBy conn key "total" 1)))
         (.get-feature db feature))))
 
   (clean-db! [db]
-    (.flushDB conn))
+    (with-connection pool settings
+      (.flushDB conn)))
 
   (get-feature [db feature]
-    (let [f (.hgetAll conn (feature-key feature))]
-      (if-not (empty? f)
-        (let [data {:feature feature :total (get-int f "total")}
-              classes (:classes settings)]
-          (reduce (fn [data class]
-                    (let [v (get-int f (class-count-field class))]
-                      (assoc-in data [:classes class] v)))
-                  data classes)))))
+    (with-connection pool settings
+      (let [f (.hgetAll conn (feature-key feature))]
+        (if-not (empty? f)
+          (let [data {:feature feature :total (get-int f "total")}
+                classes (:classes settings)]
+            (reduce (fn [data class]
+                      (let [v (get-int f (class-count-field class))]
+                        (assoc-in data [:classes class] v)))
+                    data classes))))))
 
   (count-features [db]
-    (.scard conn "features"))
+    (with-connection pool settings
+      (.scard conn "features")))
 
   (get-items [db]
-    (let [classes (:classes settings)]
-      (apply concat
-             (map (fn [class]
-                    (let [items (.smembers conn (items-class class))]
-                      (map #(hash-map :item % :class class) items)))
-                  classes))))
+    (with-connection pool settings
+      (let [classes (:classes settings)]
+        (apply concat
+               (map (fn [class]
+                      (let [items (.smembers conn (items-class class))]
+                        (map #(hash-map :item % :class class) items)))
+                    classes)))))
 
   (count-items [db]
-    (let [classes (:classes settings)]
-      (reduce + (map #(count-items-of-class db %) classes))))
+    (with-connection pool settings
+      (let [classes (:classes settings)]
+        (reduce + (map #(count-items-of-class db %) classes)))))
 
   (count-items-of-class [db class]
-    (.scard conn (items-class class))))
+    (with-connection pool settings
+      (.scard conn (items-class class)))))
 
 (defmethod db-from :redis [settings]
-  (let [conn (create-connection! settings)]
-    (RedisDB. settings conn)))
+  (let [pool (create-pool! settings)]
+    (RedisDB. settings pool)))
