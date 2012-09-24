@@ -12,7 +12,7 @@ Add the following dependencies to your _project.clj_ file:
 
 ````clojure
 
-[judgr/redis "0.2.0"]
+[judgr/redis "0.2.1"]
 ````
 
 Then, require the `judgr.redis.db` module and adjust the settings in
