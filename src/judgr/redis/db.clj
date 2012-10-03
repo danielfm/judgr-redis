@@ -32,7 +32,8 @@ flagged with a given class."
      (.exec ~'conn)))
 
 (defmacro with-connection
-  ""
+  "Gets a connection from the Jedis connection pool and uses it to evaluate
+body."
   [pool settings & body]
   `(let [~'conn (.getResource ~pool)]
      (try
@@ -42,7 +43,7 @@ flagged with a given class."
          (.returnResource  ~pool ~'conn)))))
 
 (defn create-pool!
-  ""
+  "Creates a Jedis connection pool object based on database settings."
   [{{:keys [redis]} :database}]
   (let [config (JedisPoolConfig.)]
     (JedisPool. config (:host redis) (:port redis) 1000 (:password redis))))
